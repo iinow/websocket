@@ -1,8 +1,8 @@
 <template>
     <div>
-        <input :model="msg">
-        <div>
-            웹소켓 자리..
+        <input v-model="msg" @keyup.enter="send">
+        <div v-for="(msg, index) in receiveMessageList" :key="index">
+          {{ msg }}
         </div>
     </div>
 </template>
@@ -13,7 +13,8 @@ import SockJS from 'sockjs-client'
 export default {
   data() {
     return {
-      msg: null
+      msg: null,
+      receiveMessageList: []
     }
   },
   mounted() {
@@ -21,7 +22,7 @@ export default {
   },
   methods: {
     connect() {
-      const serverURL = 'http://192.168.0.15:8081/web'
+      const serverURL = 'http://localhost:8081/web'
       let socket = new SockJS(serverURL)
       this.stompClient = Stomp.over(socket)
       console.log(`소켓 연결을 시도합니다. 서버 주소: ${serverURL}`)
@@ -33,12 +34,12 @@ export default {
           console.log('소켓 연결 성공', frame)
           // 서버의 메시지 전송 endpoint를 구독합니다.
           // 이런형태를 pub sub 구조라고 합니다.
-          this.stompClient.subscribe('/send', res => {
-            console.log('구독으로 받은 메시지 입니다.', res.body)
+          let id = this.stompClient.subscribe('/topic/public', res => {
+            this.receiveMessageList.push(JSON.parse(res.body))
+            console.log('응답 값', res.body)
+          }).id
 
-            // 받은 데이터를 json으로 파싱하고 리스트에 넣어줍니다.
-            this.recvList.push(JSON.parse(res.body))
-          })
+          console.log('구독 id', id)
         },
         error => {
           // 소켓 연결 실패
@@ -46,6 +47,11 @@ export default {
           this.connected = false
         }
       )
+    },
+    send() {
+      console.log(this.msg)
+      this.stompClient.send('/chat.sendMessage', this.msg)
+      this.msg = ''
     }
   }
 }

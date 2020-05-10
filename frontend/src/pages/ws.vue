@@ -30,6 +30,7 @@
     },
     created() {
       this.connect()
+      this.getIpAddress()
     },
     methods: {
       sendMessage(e) {
@@ -45,11 +46,11 @@
             userName: this.userName,
             content: this.message
           }
-          this.stompClient.send('/pub/receive', JSON.stringify(msg), {})
+          this.stompClient.send('/receive', JSON.stringify(msg), {})
         }
       },
       connect() {
-        const serverURL = 'http://192.168.0.15:8081/web'
+        const serverURL = 'http://localhost:8081/web'
         let socket = new SockJS(serverURL)
         this.stompClient = Stomp.over(socket)
         console.log(`소켓 연결을 시도합니다. 서버 주소: ${serverURL}`)
@@ -66,6 +67,8 @@
 
               // 받은 데이터를 json으로 파싱하고 리스트에 넣어줍니다.
               this.recvList.push(JSON.parse(res.body))
+              console.log(this.recvList)
+
             })
           },
           error => {
